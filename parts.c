@@ -11,11 +11,11 @@
 
 #include "parts.h"
 
-// сигнатура заголовка таблицы  
+// table header signature
 const uint8_t headmagic[16]={0x70, 0x54, 0x61, 0x62, 0x6c, 0x65, 0x48, 0x65, 0x61, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80};  
 
 //*********************************************
-//* Поиск таблицы разделов в загрузчике 
+//* Search for the partition table in the loader
 //*********************************************
 uint32_t find_ptable(FILE* ldr) {
 
@@ -31,14 +31,14 @@ return 0;
 }
   
 //*********************************************
-//* Печать таблицы разделов
+//* Print partition table
 //*********************************************
 void show_map(struct ptable_t ptable) {
 
 int pnum;
   
-printf("\n Версия таблицы разделов: %16.16s",ptable.version);
-printf("\n Версия прошивки:         %16.16s\n",ptable.product);
+printf("\n Partition table version: %16.16s",ptable.version);
+printf("\n Firmware version:         %16.16s\n",ptable.product);
 
 printf("\n ## ----- NAME ----- start  len  loadsize loadaddr  entry    flags    type     count\n------------------------------------------------------------------------------------------");
 
@@ -64,11 +64,11 @@ printf("\n");
 }
 
 //*********************************************
-//* Поиск таблицы разделов в памяти
+//* Search for a partition table in memory
 //*********************************************
 uint32_t find_ptable_ram(char* buf, uint32_t size) {
 
-// сигнатура заголовка таблицы  
+// table header signature
 uint32_t off;
 
 for(off=0;off<(size-16);off+=4) {

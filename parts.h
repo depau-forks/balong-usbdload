@@ -1,5 +1,5 @@
 
-// Структура описателя раздела
+// Partition descriptor structure
 struct ptable_line{
     char name[16];
     unsigned start;
@@ -8,11 +8,11 @@ struct ptable_line{
     unsigned loadaddr;   
     unsigned entry;      
     unsigned type;  
-    unsigned nproperty;  // флаги раздела
+    unsigned nproperty;  // partition flags
     unsigned count;
 };
 
-// Полная структура страницы таблицы разделов
+// Full structure of the partition table page
 struct ptable_t {
   uint8_t head[16];
   uint8_t version[16];
@@ -21,7 +21,7 @@ struct ptable_t {
   uint8_t tail[32];
 };
 
-// сигнатура заголовка таблицы  
+// table header signature
 extern const uint8_t headmagic[16];
 
 uint32_t find_ptable(FILE* ldr);

@@ -4,21 +4,21 @@
 #include <stdlib.h>
 
 //***********************************************************************
-//* Поиск сигнатуры и наложение патча
+//* Signature search and patch application
 //*
-//* ptype=0 - nop-патч
-//* ptype=1 - br-патч
+//* ptype=0 - nop-patch
+//* ptype=1 - br-patch
 //***********************************************************************
 uint32_t patch(struct defpatch fp, uint8_t* buf, uint32_t fsize, uint32_t ptype) {
 
-// накладываемый патч - mov r0,#0
+// applied patch - mov r0,#0
 const char nop0[4]={0, 0, 0xa0, 0xe3};   
 uint32_t i;
 uint8_t c;
 
 for(i=8;i<(fsize-60);i+=4) {
   if (memcmp(buf+i,fp.sig, fp.sigsize) == 0) {
-    // найдена сигнатура - накладываем патч и уходим
+    // signature found - apply the patch and exit
     switch (ptype) {
       case 0:
         memcpy(buf+i+fp.sigsize+fp.poffset,nop0,4);
@@ -35,12 +35,12 @@ for(i=8;i<(fsize-60);i+=4) {
     }
   }
 }
-// сигнатрура не найдена
+// signature not found
 return 0;
 }
 
 //**********************************************
-// Описатели патчей
+// Patch descriptors
 //**********************************************
 
 const char sigburn_v7r22[]={
@@ -85,7 +85,7 @@ struct defpatch patch_erasebad={sigbad, sizeof(sigbad), 0};
    
 
 //****************************************************
-//* Процедуры патча под разные чипсеты и задачи
+//* Patching procedures for different chipsets and tasks
 //****************************************************
 
 uint32_t pv7r2 (uint8_t* buf, uint32_t fsize) { return patch(patch_v7r2, buf, fsize,0); }

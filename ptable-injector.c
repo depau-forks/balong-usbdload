@@ -1,4 +1,4 @@
-//   Программа для замены таблицы разделов в загрузчике usbloader
+//   Program for replacing the partition table in the usbloader bootloader
 // 
 // 
 #include <stdio.h>
@@ -40,13 +40,13 @@ while ((opt = getopt(argc, argv, "mr:hx")) != -1) {
   switch (opt) {
    case 'h': 
      
-printf("\n Утилита для замены таблицы разделов в загрузчиках usbloader\
+printf("\n Utility for replacing the partition table in usbloader loaders\
 \n\n\
-%s [ключи] <имя файла usbloader>\n\n\
- Допустимы следующие ключи:\n\n\
--m       - показать текущую карту разделов в usbloader\n\
--x       - извлечь текущую карту в файл ptable.bin\n\
--r <file>- заменить карту разделов на карту из указанного файла\n\
+%s [keys] <usbloader file name>\n\n\
+ The following keys are valid:\n\n\
+-m       - show the current partition map in usbloader\n\
+-x       - extract the current map to the file ptable.bin\n\
+-r <file>- replace the partition map with a map from the specified file\n\
 \n",argv[0]);
     return;
     
@@ -70,25 +70,25 @@ printf("\n Утилита для замены таблицы разделов в
   }  
 }  
 if (optind>=argc) {
-    printf("\n - Не указано имя файла загрузчика\n");
+    printf("\n - No loader file name specified\n");
     return;
 }  
 
 ldr=fopen(argv[optind],"r+b");
 if (ldr == 0) {
-  printf("\n Ошибка открытия файла %s\n",argv[optind]);
+  printf("\n Error opening file %s\n",argv[optind]);
   return;
 }
 
  
-// Ищем таблицу разделов в файле загрузчика  
+// Search for the partition table in the loader file
 
 ptaddr=find_ptable(ldr);
 if (ptaddr == 0) {
-  printf("\n Таблица разделов в загрузчике не найдена\n");
+  printf("\n Partition table not found in the loader\n");
   return ;
 }
-// читаем текущую таблицу
+// read the current table
 fread(&ptable,sizeof(ptable),1,ldr);
 
 if (xflag) {
@@ -107,15 +107,15 @@ if (mflag | xflag) return;
 if (rflag) { 
   in=fopen(ptfile,"rb");
   if (in == 0) {
-    printf("\n Ошибка открытия файла %s",ptfile);
+    printf("\n Error opening file %s",ptfile);
     return;
   }
   fread(&ptable,sizeof(ptable),1,in);
   fclose(in);
   
-  // проверяем файл
+  // check the file
   if (memcmp(ptable.head,headmagic,16) != 0) {
-    printf("\n Входной файл не является таблицей разделов\n");
+    printf("\n The input file is not a partition table\n");
     return;
   }
   fseek(ldr,ptaddr,SEEK_SET);

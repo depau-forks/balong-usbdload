@@ -1,4 +1,4 @@
-//   Программа для замены таблицы разделов в загрузчике usbloader
+//   Program for replacing the partition table in the usbloader bootloader
 // 
 // 
 #include <stdio.h>
@@ -29,22 +29,22 @@ struct ptable_t ptable;
 FILE* in;
 
 if (argc != 2) {
-    printf("\n - Не указано имя файла с таблицей разделов\n");
+    printf("\n - No file name with partition table specified\n");
     return;
 }  
 
 in=fopen(argv[optind],"r+b");
 if (in == 0) {
-  printf("\n Ошибка открытия файла %s\n",argv[optind]);
+  printf("\n Error opening file %s\n",argv[optind]);
   return;
 }
 
  
-// читаем текущую таблицу
+// read the current table
 fread(&ptable,sizeof(ptable),1,in);
 
 if (strncmp(ptable.head, "pTableHead", 16) != 0) {
-  printf("\n Файл не является таблицей разделов\n");
+  printf("\n The file is not a partition table\n");
   return ;
 }
   

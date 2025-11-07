@@ -29,17 +29,17 @@ int oflag=0,bflag=0;
 uint32_t res;
 
 
-// Разбор командной строки
+// Command line parsing
 
 while ((opt = getopt(argc, argv, "o:bh")) != -1) {
   switch (opt) {
    case 'h': 
      
-printf("\n Программа для автоматического патча загрузчиков платформ Balong V7\n\n\
-%s [ключи] <файл загрузчика usbloader>\n\n\
- Допустимы следующие ключи:\n\n\
--o file  - имя выходного файла. По умолчанию производится только проверка возможности патча\n\
--b       - добавить патч, отключающий проверку дефектных блоков\n\
+printf("\n Program for automatic patching of Balong V7 platform loaders\n\n\
+%s [keys] <usbloader file>\n\n\
+ The following keys are valid:\n\n\
+-o file  - output file name. By default, only a patch possibility check is performed\n\
+-b       - add a patch that disables checking for bad blocks\n\
 \n",argv[0]);
     return;
 
@@ -59,25 +59,25 @@ printf("\n Программа для автоматического патча �
   }
 }  
 
-printf("\n Программа автоматической модификации загрузчиков Balong V7, (c) forth32");
+printf("\n Program for automatic modification of Balong V7 loaders, (c) forth32");
 
  if (optind>=argc) {
-    printf("\n - Не указано имя файла для загрузки\n - Для подсказки укажите ключ -h\n");
+    printf("\n - No file name specified for download\n - For a hint, specify the -h key\n");
     return;
 }  
     
 in=fopen(argv[optind],"rb");
 if (in == 0) {
-  printf("\n Ошибка открытия файла %s",argv[optind]);
+  printf("\n Error opening file %s",argv[optind]);
   return;
 }
 
-// определяем размер файла
+// determine the file size
 fseek(in,0,SEEK_END);
 fsize=ftell(in);
 rewind(in);
 
-// выделяем буфер и читаем туда весь файл
+// allocate a buffer and read the entire file into it
 buf=malloc(fsize);
 fread(buf,1,fsize,in);
 fclose(in);
@@ -86,49 +86,49 @@ fclose(in);
 
 res=pv7r1(buf, fsize);
 if (res != 0)  {
-  printf("\n* Найдена сигнатура типа V7R1 по смещению %08x",res);
+  printf("\n* V7R1 type signature found at offset %08x",res);
   goto endpatch;
 }  
 
 res=pv7r2(buf, fsize);
 if (res != 0)  {
-  printf("\n* Найдена сигнатура типа V7R2 по смещению %08x",res);
+  printf("\n* V7R2 type signature found at offset %08x",res);
   goto endpatch;
 }  
 
 res=pv7r11(buf, fsize);
 if (res != 0)  {
-  printf("\n* Найдена сигнатура типа V7R11 по смещению %08x",res);
+  printf("\n* V7R11 type signature found at offset %08x",res);
   goto endpatch;
 }   
 
 res=pv7r22(buf, fsize);
 if (res != 0)  {
-  printf("\n* Найдена сигнатура типа V7R22 по смещению %08x",res);
+  printf("\n* V7R22 type signature found at offset %08x",res);
   goto endpatch;
 }  
 
 res=pv7r22_2(buf, fsize);
 if (res != 0)  {
-  printf("\n* Найдена сигнатура типа V7R22_2 по смещению %08x",res);
+  printf("\n* V7R22_2 type signature found at offset %08x",res);
   goto endpatch;
 }
 
 res=pv7r22_3(buf, fsize);
 if (res != 0)  {
-  printf("\n* Найдена сигнатура типа V7R22_3 по смещению %08x",res);
+  printf("\n* V7R22_3 type signature found at offset %08x",res);
   goto endpatch;
 }
 
-printf("\n! Сигнатура eraseall-патча не найдена");
+printf("\n! Eraseall-patch signature not found");
 
 //==================================================================================
 endpatch:
 
 if (bflag) {
    res=perasebad(buf, fsize);
-   if (res != 0) printf("\n* Найдена сигнатура isbad по смещению %08x",res);  
-   else  printf("\n! Сигнатура isbad не найдена");  
+   if (res != 0) printf("\n* isbad signature found at offset %08x",res);  
+   else  printf("\n! isbad signature not found");  
 }
 
 if (oflag) {
@@ -137,7 +137,7 @@ if (oflag) {
     fwrite(buf,1,fsize,out);
     fclose(out);
   }
-  else printf("\n Ошибка открытия выходного файла %s",outfilename);
+  else printf("\n Error opening output file %s",outfilename);
 }
 free(buf);
 printf("\n");

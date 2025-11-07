@@ -1,4 +1,4 @@
-// Загрузчик usbloader.bin через аварийный порт для модемов на платформе Balong V7R2.
+// Loader for usbloader.bin via emergency port for modems on the Balong V7R2 platform.
 //
 //
 #include <stdio.h>
@@ -36,7 +36,7 @@ FILE* ldr;
 
 
 //*************************************************
-//* HEX-дамп области памяти                       *
+//* HEX-dump of a memory area                    *
 //*************************************************
 
 void dump(unsigned char buffer[],int len) {
@@ -52,12 +52,12 @@ for (i=0;i<len;i+=16) {
   printf(" *");
   for (j=0;j<16;j++) {
    if ((i+j) < len) {
-    // преобразование байта для символьного отображения
+    // byte conversion for character display
     ch=buffer[i+j];
     if ((ch < 0x20)||((ch > 0x7e)&&(ch<0xc0))) putchar('.');
     else putchar(ch);
    } 
-   // заполнение пробелами для неполных строк 
+   // filling with spaces for incomplete lines
    else printf(" ");
   }
   printf("*\n");
@@ -66,7 +66,7 @@ for (i=0;i<len;i+=16) {
 
 
 //*************************************************
-//* Рассчет контрольной суммы командного пакета
+//* Command packet checksum calculation
 //*************************************************
 void csum(unsigned char* buf, int len) {
 
@@ -85,7 +85,7 @@ buf[len-1]=csum&0xff;
 }
 
 //*************************************************
-//*   Отсылка командного пакета модему
+//*   Sending a command packet to the modem
 //*************************************************
 int sendcmd(unsigned char* cmdbuf, int len) {
 
@@ -94,7 +94,7 @@ unsigned int replylen;
 
 #ifndef WIN32
 csum(cmdbuf,len);
-write(siofd,cmdbuf,len);  // отсылка команды
+write(siofd,cmdbuf,len);  // sending a command
 tcdrain(siofd);
 replylen=read(siofd,replybuf,1024);
 #else
@@ -116,7 +116,7 @@ return 0;
 }
 
 //*************************************
-// Открытие и настройка последовательного порта
+// Opening and configuring the serial port
 //*************************************
 
 int open_port(char* devname) {
@@ -127,21 +127,21 @@ int open_port(char* devname) {
 int i,dflag=1;
 char devstr[200]={0};
 
-// Вместо полного имени устройства разрешается передавать только номер ttyUSB-порта
+// Instead of the full device name, it is allowed to pass only the ttyUSB port number
 
-// Проверяем имя устройства на наличие нецифровых символов
+// We check the device name for non-digital characters
 for(i=0;i<strlen(devname);i++) {
   if ((devname[i]<'0') || (devname[i]>'9')) dflag=0;
 }
-// Если в строке - только цифры, добавляем префикс /dev/ttyUSB
+// If the string contains only numbers, add the prefix /dev/ttyUSB
 if (dflag) strcpy(devstr,"/dev/ttyUSB");
-// копируем имя устройства
+// copy the device name
 strcat(devstr,devname);
 
 siofd = open(devstr, O_RDWR | O_NOCTTY |O_SYNC);
 if (siofd == -1) return 0;
 
-bzero(&sioparm, sizeof(sioparm)); // готовим блок атрибутов termios
+bzero(&sioparm, sizeof(sioparm)); // prepare the termios attribute block
 sioparm.c_cflag = B115200 | CS8 | CLOCAL | CREAD ;
 sioparm.c_iflag = 0;  // INPCK;
 sioparm.c_oflag = 0;
@@ -194,7 +194,7 @@ return 1;
 }
 
 //*************************************
-//* Поиск linux-ядра в образе раздела
+//* Search for the linux kernel in the partition image
 //*************************************
 int locate_kernel(char* pbuf, uint32_t size) {
   
@@ -269,10 +269,10 @@ static int find_port(int* port_no, char* port_name)
 void main(int argc, char* argv[]) {
 
 unsigned int i,res,opt,datasize,pktcount,adr;
-int bl;    // текущий блок
+int bl;    // current block
 unsigned char c;
 int fbflag=0, tflag=0, mflag=0, bflag=0, cflag=0, xflag=0;
-int koff;  // смещение до ANDROID-заголовка
+int koff;  // offset to ANDROID-header
 char ptfile[100];
 
 FILE* pt;
@@ -285,15 +285,15 @@ unsigned char cmdhead[14]={0xfe,0, 0xff};
 unsigned char cmddata[1040]={0xda,0,0};
 unsigned char cmdeod[5]={0xed,0,0,0,0};
 
-// список разделов, которым нужно установить файловый флаг
+// list of partitions that need to have the file flag set
 uint8_t fileflag[41];
 
 struct {
-  int lmode;  // режим загрузки: 1 - прямой старт, 2 - через перезапуск A-core
-  int size;   // размер компонента
-  int adr;    // адрес загрузки компонента в память
-  int offset; // смещение до компонента от начала файла
-  char* pbuf; // буфер для загрузки образа компонента
+  int lmode;  // boot mode: 1 - direct start, 2 - via A-core restart
+  int size;   // component size
+  int adr;    // component loading address in memory
+  int offset; // offset to the component from the beginning of the file
+  char* pbuf; // buffer for loading the component image
 } blk[10];
 
 
@@ -316,22 +316,22 @@ while ((opt = getopt(argc, argv, "hp:ft:ms:bcx:")) != -1) {
   switch (opt) {
    case 'h': 
      
-printf("\n Утилита предназначена для аварийной USB-загрузки устройств на чипете Balong V7\n\n\
-%s [ключи] <имя файла для загрузки>\n\n\
- Допустимы следующие ключи:\n\n"
+printf("\n The utility is intended for emergency USB-boot of devices on the Balong V7 chipset\n\n\
+%s [keys] <file name to download>\n\n\
+ The following keys are valid:\n\n"
 #ifndef WIN32
-"-p <tty> - последовательный порт для общения с загрузчиком (по умолчанию /dev/ttyUSB0)\n"
+"-p <tty> - serial port for communication with the bootloader (default /dev/ttyUSB0)\n"
 #else
-"-p # - номер последовательного порта для общения с загрузчиком (например, -p8)\n"
-"  если ключ -p не указан, производится автоопределение порта\n"
+"-p # - serial port number for communication with the bootloader (for example, -p8)\n"
+"  if the -p key is not specified, the port is automatically detected\n"
 #endif
-"-f       - грузить usbloader только до fastboot (без запуска линукса)\n\
--b       - аналогично -f, дополнительно отключить проверку дефектных блоков при стирании\n\
--t <file>- взять таблицу разделов из указанного файла\n\
--m       - показать таблицу разделов загрузчика и завершить работу\n\
--s n     - установить файловый флаг для раздела n (ключ можно указать несколько раз)\n\
--c       - не производить автоматический патч стирания разделов\n\
--x <1-6> - обойти secuboot и загрузить неподписанный загрузчик (1=Balong V7R1, 2=V7R2/V7R11, 3=V7R22, 4=V7R5, 5=V7R65, 6=5000)\n\
+"-f       - load usbloader only to fastboot (without starting linux)\n\
+-b       - similar to -f, additionally disable checking for bad blocks when erasing\n\
+-t <file>- take the partition table from the specified file\n\
+-m       - show the bootloader partition table and exit\n\
+-s n     - set the file flag for partition n (the key can be specified several times)\n\
+-c       - do not perform automatic patch for erasing partitions\n\
+-x <1-6> - bypass secuboot and load an unsigned bootloader (1=Balong V7R1, 2=V7R2/V7R11, 3=V7R22, 4=V7R5, 5=V7R65, 6=5000)\n\
            (1) V7R1:  E3272, E3276, E5372 (Hi6920)\n\
            (2) V7R2:  E3372s, E5373, E5377, E5786 (Hi6930)\n\
            (2) V7R11: E3372h, E8372h, E5573, E5576, B310, B315s (Hi6921)\n\
@@ -371,7 +371,7 @@ printf("\n Утилита предназначена для аварийной U
    case 's':
      i=atoi(optarg);
      if (i>41) {
-       printf("\n Раздела #%i не существует\n",i);
+       printf("\n Partition #%i does not exist\n",i);
        return;
      }
      fileflag[i]=1;
@@ -380,7 +380,7 @@ printf("\n Утилита предназначена для аварийной U
     case 'x':
      xflag=atoi(optarg);
      if (xflag>6) {
-       printf("\n Обход secuboot %d не поддерживается\n", xflag);
+       printf("\n Secuboot bypass %d is not supported\n", xflag);
        return;
      }
      break;
@@ -392,87 +392,87 @@ printf("\n Утилита предназначена для аварийной U
   }
 }  
 
-printf("\n Аварийный USB-загрузчик Balong-чипсета, версия 2.20, (c) forth32, 2015");
+printf("\n Balong chipset emergency USB loader, version 2.20, (c) forth32, 2015");
 #ifdef WIN32
-printf("\n Порт для Windows 32bit  (c) rust3028, 2016");
+printf("\n Port for Windows 32bit  (c) rust3028, 2016");
 #endif
 
 
 if (optind>=argc) {
-    printf("\n - Не указано имя файла для загрузки\n");
+    printf("\n - No file name specified for download\n");
     return;
 }  
 
 ldr=fopen(argv[optind],"rb");
 if (ldr == 0) {
-  printf("\n Ошибка открытия %s",argv[optind]);
+  printf("\n Error opening %s",argv[optind]);
   return;
 }
 
-// Прверяем сигнатуру usloader
+// Checking the usloader signature
 fread(&i,1,4,ldr);
 if (i != 0x20000) {
-  printf("\n Файл %s не является загрузчиком usbloader\n",argv[optind]);
+  printf("\n The file %s is not a usbloader loader\n",argv[optind]);
   return;
 }  
 
-fseek(ldr,36,SEEK_SET); // начало описателей блоков для загрузки
+fseek(ldr,36,SEEK_SET); // beginning of block descriptors for loading
 
-// Разбираем заголовок
+// Parsing the header
 
 fread(&blk[0],1,16,ldr);  // raminit
 fread(&blk[1],1,16,ldr);  // usbldr
 
 //---------------------------------------------------------------------
-// Чтение компонентов в память
+// Reading components into memory
 for(bl=0;bl<2;bl++) {
 
-  // выделяем память под полный образ раздела
+  // allocate memory for the full partition image
   blk[bl].pbuf=(char*)malloc(blk[bl].size);
 
-  // читаем образ раздела в память
+  // read the partition image into memory
   fseek(ldr,blk[bl].offset,SEEK_SET);
   res=fread(blk[bl].pbuf,1,blk[bl].size,ldr);
   if (res != blk[bl].size) {
-      printf("\n Неожиданный конец файла: прочитано %i ожидалось %i\n",res,blk[bl].size);
+      printf("\n Unexpected end of file: read %i expected %i\n",res,blk[bl].size);
       return;
   }
-  if (bl == 0) continue; // для raminit более ничего делать не надо
+  if (bl == 0) continue; // for raminit nothing more needs to be done
 
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-  // fastboot-патч
+  // fastboot-patch
   if (fbflag) {
     koff=locate_kernel(blk[bl].pbuf,blk[bl].size);
     if (koff != 0) {
-      blk[bl].pbuf[koff]=0x55; // патч сигнатуры
-      blk[bl].size=koff+8; // обрезаем раздел до начала ядра
+      blk[bl].pbuf[koff]=0x55; // patch signature
+      blk[bl].size=koff+8; // truncate the partition to the beginning of the kernel
     }
     else {
-        printf("\n В загрузчике нет ANDROID-компонента - fastboot-загрузка невозможна\n");
+        printf("\n There is no ANDROID-component in the loader - fastboot-boot is not possible\n");
         exit(0);
     }    
   }  
 
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-  // Ищем таблицу разделов в загрузчике
+  // Search for the partition table in the loader
   ptoff=find_ptable_ram(blk[bl].pbuf,blk[bl].size);
   
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-  // патч таблицы разделов
+  // patch partition table
   if (tflag) {
     pt=fopen(ptfile,"rb");
     if (pt == 0) { 
-      printf("\n Не найден файл %s - замена таблицы разделов невозможна\n",ptfile);
+      printf("\n File not found %s - replacing the partition table is not possible\n",ptfile);
       return;
     }  
     fread(ptbuf,1,2048,pt);
     fclose(pt);
     if (memcmp(headmagic,ptbuf,sizeof(headmagic)) != 0) {
-      printf("\n Файл %s не явлется таблицей разделов\n",ptfile);
+      printf("\n The file %s is not a partition table\n",ptfile);
       return;
     }  
     if (ptoff == 0) {
-          printf("\n В загрузчике не найдена таблица разделов - замена невозможна");
+          printf("\n Partition table not found in the loader - replacement is not possible");
 	  return;
     }
     memcpy(blk[bl].pbuf+ptoff,ptbuf,2048);
@@ -480,7 +480,7 @@ for(bl=0;bl<2;bl++) {
   ptable=(struct ptable_t*)(blk[bl].pbuf+ptoff);
   
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-  // Патч файловых флагов
+  // Patch file flags
   for(i=0;i<41;i++) {
     if (fileflag[i]) {
       ptable->part[i].nproperty |= 1;
@@ -488,25 +488,25 @@ for(bl=0;bl<2;bl++) {
   }  
 
   //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-  // Вывод таблицы разделов
+  // Output of the partition table
   if (mflag) {
     if (ptoff == 0) {
-      printf("\n Таблица разделов не найдена - вывод карты невозможен\n");
+      printf("\n Partition table not found - map output is not possible\n");
       return;
     }
     show_map(*ptable);
     return;
   }
 
-  // Патч erase-процедуры на предмет игнорировани бедблоков
+  // Patch erase-procedure to ignore bad blocks
   if (bflag) {
     res=perasebad(blk[bl].pbuf, blk[bl].size);
     if (res == 0) { 
-      printf("\n! Не найдена сигнатура isbad - загрузка невозможна\n");  
+      printf("\n! isbad signature not found - loading is not possible\n");  
       return;
     }  
   }
-  // Удаление процедуры flash_eraseall
+  // Removing the flash_eraseall procedure
   if (!cflag) {
       res = pv7r1(blk[bl].pbuf, blk[bl].size);
       if (res == 0)
@@ -519,9 +519,9 @@ for(bl=0;bl<2;bl++) {
           res = pv7r22_2(blk[bl].pbuf, blk[bl].size);
       if (res == 0)
           res = pv7r22_3(blk[bl].pbuf, blk[bl].size);
-      if (res != 0)  printf("\n\n * Удалена процедура flash_eraseall по смещению %08x", blk[bl].offset + res);
+      if (res != 0)  printf("\n\n * Removed flash_eraseall procedure at offset %08x", blk[bl].offset + res);
       else {
-          printf("\n Процедура eraseall не найдена в загрузчике - используйте ключ -с для загрузки без патча!\n");
+          printf("\n The eraseall procedure was not found in the loader - use the -c key to load without a patch!\n");
           return;
       }
   }
@@ -533,28 +533,28 @@ for(bl=0;bl<2;bl++) {
 #ifdef WIN32
 if (*devname == '\0')
 {
-  printf("\n\nПоиск порта аварийной загрузки...\n");
+  printf("\n\nSearching for emergency boot port...\n");
   
   if (find_port(&port_no, port_name) == 0)
   {
     sprintf(devname, "%d", port_no);
-    printf("Порт: \"%s\"\n", port_name);
+    printf("Port: \"%s\"\n", port_name);
   }
   else
   {
-    printf("Порт не обнаружен!\n");
+    printf("Port not found!\n");
     return;
   }
 }
 #endif
 
 if (!open_port(devname)) {
-  printf("\n Последовательный порт не открывается\n");
+  printf("\n Serial port does not open\n");
   return;
 }  
 
 
-// Проверяем загрузочный порт
+// Checking the boot port
 c=0;
 #ifndef WIN32
 write(siofd,"A",1);
@@ -566,12 +566,12 @@ res=read(siofd,&c,1);
     ReadFile(hSerial, &c, 1, &bytes_read, NULL);
 #endif
 if (c != 0x55) {
-  printf("\n ! Порт не находится в режиме USB Boot\n");
+  printf("\n ! The port is not in USB Boot mode\n");
   return;
 }  
 
 //----------------------------------
-// главный цикл загрузки - загружаем все блоки, найденные в заголовке
+// main download cycle - load all blocks found in the header
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 
 switch (xflag) {
@@ -592,7 +592,7 @@ switch (xflag) {
         break;
 }
 
-printf("\n\n Компонент    Адрес    Размер   %%загрузки\n------------------------------------------\n");
+printf("\n\n Component    Address    Size   %%download\n------------------------------------------\n");
 
 for(bl=0;bl<2;bl++) {
 
@@ -600,41 +600,41 @@ for(bl=0;bl<2;bl++) {
   pktcount=1;
 
 
-  // фрмируем пакет начала блока  
+  // form the block start packet
   *((unsigned int*)&cmdhead[4])=htonl(blk[bl].size);
   *((unsigned int*)&cmdhead[8])=htonl(blk[bl].adr);
   cmdhead[3]=blk[bl].lmode;
   
-  // отправляем пакет начала блока
+  // send the block start packet
   res=sendcmd(cmdhead,14);
   if (!res) {
-    printf("\nМодем отверг пакет заголовка\n");
+    printf("\nModem rejected header packet\n");
     return;
   }  
 
   
-  // ---------- Цикл поблочной загрузки данных ---------------------
+  // ---------- Block data loading cycle ---------------------
   for(adr=0;adr<blk[bl].size;adr+=1024) {
 
-    // формируем размер последнего загружаемого пакета
+    // form the size of the last loaded packet
     if ((adr+1024)>=blk[bl].size) datasize=blk[bl].size-adr;  
 
     printf("\r %s    %08x %8i   %i%%",bl?"usbboot":"raminit",blk[bl].adr,blk[bl].size,(adr+datasize)*100/blk[bl].size); 
   
-    // готовим пакет данных
+    // prepare a data packet
     cmddata[1]=pktcount;
     cmddata[2]=(~pktcount)&0xff;
     memcpy(cmddata+3,blk[bl].pbuf+adr,datasize);
     
     pktcount++;
     if (!sendcmd(cmddata,datasize+5)) {
-      printf("\nМодем отверг пакет данных");
+      printf("\nModem rejected data packet");
       return;
     }  
   }
   free(blk[bl].pbuf);
 
-  // Фрмируем пакет конца данных
+  // Form the end of data packet
   cmdeod[1]=pktcount;
   cmdeod[2]=(~pktcount)&0xff;
 
@@ -644,11 +644,11 @@ for(bl=0;bl<2;bl++) {
   }
 
   if (!sendcmd(cmdeod,5)) {
-    printf("\nМодем отверг пакет конца данных");
+    printf("\nModem rejected end of data packet");
   }
 printf("\n");  
 } 
-printf("\n Загрузка окончена\n");  
+printf("\n Download finished\n");  
 }
 
 
