@@ -1,18 +1,19 @@
 CC       = gcc
-LIBS     = 
+LIBS     =
 CFLAGS   = -O2 -g -Wno-unused-result
 
 .PHONY: all clean
 
-all:    balong-usbdload ptable-injector loader-patch ptable-list
+all:    balong-usbdload ptable-injector loader-patch ptable-list ptable-editor
 
-clean: 
-	rm *.o
-	rm balong-usbdload
-	rm ptable-injector
-	rm loader-patch
-	rm ptable-list
-	
+clean:
+	rm -f *.o
+	rm -f balong-usbdload
+	rm -f ptable-injector
+	rm -f loader-patch
+	rm -f ptable-list
+	rm -f ptable-editor
+
 #.c.o:
 #	$(CC) -o $@ $(LIBS) $^ qcio.o
 
@@ -21,10 +22,12 @@ balong-usbdload: balong-usbdload.o parts.o patcher.o exploit.o
 
 ptable-injector: ptable-injector.o parts.o
 	@gcc $^ -o $@ $(LIBS)
-	
+
 loader-patch: loader-patch.o patcher.o
 	@gcc $^ -o $@ $(LIBS)
 
 ptable-list: ptable-list.o parts.o
 	@gcc $^ -o $@ $(LIBS)
-	
+
+ptable-editor: ptable-editor.o parts.o
+	@gcc $^ -o $@ $(LIBS)
