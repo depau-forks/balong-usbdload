@@ -1,0 +1,7 @@
+# Build artifacts
+*.o
+balong-usbdload
+ptable-injector
+loader-patch
+ptable-list
+ptable-editor
