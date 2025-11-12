@@ -238,8 +238,6 @@ int unpack_loader(const char* input_file, const char* output_dir) {
         fprintf(meta, "name=%s\n", block_name);
         fprintf(meta, "lmode=%u\n", block->lmode);
         fprintf(meta, "address=0x%08x\n", block->adr);
-        fprintf(meta, "size=0x%08x\n", block->size);
-        fprintf(meta, "offset=0x%08x\n", block->offset);
         fprintf(meta, "file=block%d_%s.bin\n\n", i, block_name);
         
         block_count++;
@@ -294,8 +292,6 @@ int parse_metadata(const char* meta_path, struct block_desc blocks[MAX_BLOCKS],
                 blocks[current_block].lmode = strtoul(value, NULL, 0);
             } else if (strcmp(key, "address") == 0) {
                 blocks[current_block].adr = strtoul(value, NULL, 0);
-            } else if (strcmp(key, "size") == 0) {
-                blocks[current_block].size = strtoul(value, NULL, 0);
             } else if (strcmp(key, "file") == 0) {
                 strncpy(block_files[current_block], value, 255);
                 block_files[current_block][255] = '\0';
@@ -336,14 +332,24 @@ int pack_loader(const char* input_dir, const char* output_file) {
     printf(" Output file: %s\n", output_file);
     printf(" Blocks to pack: %d\n\n", block_count);
     
-    // Calculate total size needed
-    uint32_t current_offset = HEADER_SIZE;
+    // First pass: determine block sizes from actual files
     size_t total_size = HEADER_SIZE;
     
     for (int i = 0; i < block_count; i++) {
-        if (blocks[i].size > 0) {
-            total_size += blocks[i].size;
+        char block_path[512];
+        snprintf(block_path, sizeof(block_path), "%s/%s", input_dir, block_files[i]);
+        
+        // Get file size
+        FILE* f = fopen(block_path, "rb");
+        if (!f) {
+            printf("\n Error: Cannot open block file %s\n", block_path);
+            return 0;
         }
+        fseek(f, 0, SEEK_END);
+        blocks[i].size = ftell(f);
+        fclose(f);
+        
+        total_size += blocks[i].size;
     }
     
     // Allocate buffer for packed file
@@ -371,6 +377,7 @@ int pack_loader(const char* input_dir, const char* output_file) {
     header->magic = MAGIC_SIGNATURE;
     
     // Pack blocks
+    uint32_t current_offset = HEADER_SIZE;
     for (int i = 0; i < block_count; i++) {
         if (blocks[i].size == 0) continue;
         
@@ -385,10 +392,10 @@ int pack_loader(const char* input_dir, const char* output_file) {
             return 0;
         }
         
-        // Verify size matches
+        // Size should match what we calculated earlier
+        // (but use actual block_size for safety)
         if (block_size != blocks[i].size) {
-            printf("\n Warning: Block %d size mismatch (metadata: %u, file: %zu)\n",
-                   i, blocks[i].size, block_size);
+            // This shouldn't happen since we just read it, but handle it
             blocks[i].size = block_size;
         }
         

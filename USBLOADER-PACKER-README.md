@@ -70,18 +70,16 @@ The `metadata.txt` file contains block information in INI format:
 name=raminit
 lmode=1
 address=0x00000000
-size=0x00000d54
-offset=0x00000054
 file=block0_raminit.bin
 
 [Block1]
 name=usbldr
 lmode=2
 address=0x57700000
-size=0x005a5df1
-offset=0x00000da8
 file=block1_usbldr.bin
 ```
+
+Block sizes are automatically determined from the actual file sizes during repacking, so there's no need to store them in the metadata. This ensures the metadata stays in sync with the actual files.
 
 ## Use Cases
 
@@ -125,5 +123,6 @@ Options:
 
 - The tool preserves all header information including padding
 - Block descriptors must be consecutive (no gaps in block indices)
+- Block sizes are automatically determined from actual file sizes during repacking
 - Offsets are automatically calculated during repacking
 - The header is preserved from the original file when available
