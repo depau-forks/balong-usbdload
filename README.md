@@ -36,6 +36,25 @@ Original Huawei USB loaders erase NAND flash when loaded.  usblsafe.bin "safe" l
 
 This repository contains "loader-patch" automatic patcher to convert usbloader.bin to usblsafe.bin. Moreover, balong-usbdload would patch "unsafe" usb loaders automatically, and if it failed to do so, won't allow you to load unpatched loaders without `-c` flag to prevent flash erasure.
 
+### USB Loader Packer/Unpacker
+
+The `usbloader-packer` tool allows you to unpack and repack USB loader images. This is useful for:
+- Extracting individual components (raminit, usbldr) from USB loaders
+- Analyzing USB loader structure and contents
+- Modifying specific blocks and repacking into a working loader
+- Creating modular backups of USB loader components
+
+See [USBLOADER-PACKER-README.md](USBLOADER-PACKER-README.md) for detailed usage instructions.
+
+Basic usage:
+```bash
+# Unpack a USB loader
+./usbloader-packer -u usbloader.bin -d output-dir
+
+# Repack a USB loader
+./usbloader-packer -p output-dir -o usbloader-new.bin
+```
+
 ### English user interface
 
 The language of these utilities is Russian. I am not going to translate it into English. Use machine translation if needed.
