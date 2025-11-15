@@ -5,3 +5,8 @@ ptable-injector
 loader-patch
 ptable-list
 ptable-editor
+usbloader-packer
+
+# Temporary files
+/tmp/
+*.tmp
