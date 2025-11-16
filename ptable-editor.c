@@ -158,7 +158,7 @@ static int parse_text(FILE *in, struct ptable_t *ptable) {
             struct ptable_line *lineptr = &ptable->part[current];
             if (strcmp(key, "name") == 0) {
                 if (strlen(value) >= sizeof(lineptr->name)) {
-                    fprintf(stderr, "Partition name too long\n");
+                    fprintf(stderr, "Partition name too long: %s\n", value);
                     return -1;
                 }
                 memset(lineptr->name, 0, sizeof(lineptr->name));
